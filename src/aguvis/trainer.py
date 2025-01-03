@@ -1,6 +1,6 @@
 from datetime import timedelta
-from typing import Optional
 from functools import wraps
+from typing import Optional
 
 import torch
 import torch.distributed as dist
@@ -31,7 +31,7 @@ def rank0_print(*args):
             print(f"Rank {dist.get_rank()}: ", *args)
     else:
         print(*args)
-   
+
 
 def maybe_zero_3(param, ignore_status=False, name=None):
     from deepspeed import zero
@@ -73,41 +73,44 @@ class AGUVISTrainer(Trainer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         original_save = self._save
         original_save_model = self.save_model
-        
+
         def modify_eos_token(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 tokenizer = self.processing_class.tokenizer
                 old_config_id = self.model.config.eos_token_id
                 old_eos_token = tokenizer.eos_token
-                old_generation_config_eos_token_id = self.model.generation_config.eos_token_id if hasattr(self.model, 'generation_config') else None
-                
+                old_generation_config_eos_token_id = (
+                    self.model.generation_config.eos_token_id if hasattr(self.model, "generation_config") else None
+                )
+
                 try:
                     new_eos_token_id = tokenizer.convert_tokens_to_ids("<|diff_marker|>")
                     self.model.config.eos_token_id = [new_eos_token_id]
                     tokenizer.eos_token = "<|diff_marker|>"
-                    if hasattr(self.model, 'generation_config'):
+                    if hasattr(self.model, "generation_config"):
                         self.model.generation_config.eos_token_id = [new_eos_token_id]
-                    
+
                     print("Set eos token id to", new_eos_token_id)
                     print("Set eos token to", "<|diff_marker|>")
                     print("Set generation config eos token id to", [new_eos_token_id])
-                    
+
                     result = func(*args, **kwargs)
                     return result
                 finally:
                     self.model.config.eos_token_id = old_config_id
                     tokenizer.eos_token = old_eos_token
-                    if hasattr(self.model, 'generation_config') and old_generation_config_eos_token_id is not None:
+                    if hasattr(self.model, "generation_config") and old_generation_config_eos_token_id is not None:
                         self.model.generation_config.eos_token_id = old_generation_config_eos_token_id
-                    
+
                     print("Set eos token id back to", old_config_id)
                     print("Set eos token back to", old_eos_token)
                     if old_generation_config_eos_token_id is not None:
                         print("Set generation config eos token id back to", old_generation_config_eos_token_id)
+
             return wrapper
 
         self._save = modify_eos_token(original_save)

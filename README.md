@@ -79,6 +79,21 @@ pip install -e .
 bash scripts/train.sh
 ```
 
+### Inference
+
+1. Configure your inference settings:
+   - Open `scripts/inference.sh`
+   - Set the `MODEL_PATH` variable to specify your model path
+   - Set the `IMAGE_PATH` variable to specify your image path
+   - Set the `INSTRUCTION` variable to specify your instruction
+   - Set the `PREVIOUS_ACTIONS` variable to specify your previous actions or leave it empty
+   - Set the `LOW_LEVEL_INSTRUCTION` variable to specify your low-level instruction or leave it empty
+
+2. Start inference:
+```bash
+bash scripts/inference.sh
+```
+
 ## Checklist
 
 - **Data**

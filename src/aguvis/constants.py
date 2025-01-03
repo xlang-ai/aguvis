@@ -1,3 +1,5 @@
+import json
+
 CONTROLLER_HEART_BEAT_EXPIRATION = 30
 WORKER_HEART_BEAT_INTERVAL = 15
 
@@ -37,3 +39,122 @@ additional_special_tokens = [
     "<|recipient|>",
     "<|diff_marker|>",
 ]
+
+# Plugin Functions
+select_option_func = {
+    "name": "browser.select_option",
+    "description": "Select an option from a dropdown menu",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "x": {
+                "type": "number",
+                "description": "The x coordinate of the dropdown menu",
+            },
+            "y": {
+                "type": "number",
+                "description": "The y coordinate of the dropdown menu",
+            },
+            "value": {
+                "type": "string",
+                "description": "The value of the option to select",
+            },
+        },
+        "required": ["x", "y", "value"],
+    },
+}
+
+swipe_func = {
+    "name": "mobile.swipe",
+    "description": "Swipe on the screen",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "from_coord": {
+                "type": "array",
+                "items": {"type": "number"},
+                "description": "The starting coordinates of the swipe",
+            },
+            "to_coord": {
+                "type": "array",
+                "items": {"type": "number"},
+                "description": "The ending coordinates of the swipe",
+            },
+        },
+        "required": ["from_coord", "to_coord"],
+    },
+}
+
+home_func = {"name": "mobile.home", "description": "Press the home button"}
+
+back_func = {"name": "mobile.back", "description": "Press the back button"}
+
+wait_func = {
+    "name": "mobile.wait",
+    "description": "wait for the change to happen",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "seconds": {
+                "type": "number",
+                "description": "The seconds to wait",
+            },
+        },
+        "required": ["seconds"],
+    },
+}
+
+long_press_func = {
+    "name": "mobile.long_press",
+    "description": "Long press on the screen",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "x": {
+                "type": "number",
+                "description": "The x coordinate of the long press",
+            },
+            "y": {
+                "type": "number",
+                "description": "The y coordinate of the long press",
+            },
+        },
+        "required": ["x", "y"],
+    },
+}
+
+open_app_func = {
+    "name": "mobile.open_app",
+    "description": "Open an app on the device",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "app_name": {
+                "type": "string",
+                "description": "The name of the app to open",
+            },
+        },
+        "required": ["app_name"],
+    },
+}
+
+agent_system_message = f"""You are a GUI agent. You are given a task and a screenshot of the screen. You need to perform a series of pyautogui actions to complete the task.
+
+You have access to the following functions:
+- {json.dumps(swipe_func)}
+- {json.dumps(home_func)}
+- {json.dumps(back_func)}
+- {json.dumps(wait_func)}
+- {json.dumps(long_press_func)}
+- {json.dumps(open_app_func)}
+"""
+
+user_instruction = """Please generate the next move according to the ui screenshot, instruction and previous actions.
+
+Instruction: {overall_goal}
+
+Previous actions:
+{previous_actions}
+"""
+
+until = ["<|diff_marker|>"]
